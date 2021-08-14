@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">watcher</string>
+    <string name="google_maps_key">AIzaSyAcRJDehXBWLIdB49ubwJFQ4OPV1-VLGkY</string>
+    <string-array name="Resultado">
+        <item>(Seleccionar)</item>
+        <item>Sin Novedad</item>
+        <item>ATM Apagado</item>
+        <item>ATM Violentado</item>
+    </string-array>
+    <string name="title_activity_destino_ronda">Map</string>
+</resources>
