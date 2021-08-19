@@ -16,6 +16,9 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -38,15 +41,78 @@ public class DestinoRonda extends FragmentActivity implements OnMapReadyCallback
     AlertDialog alerta = null;
     HubConnection hubConnection;
     private FusedLocationProviderClient mFusedLocationClient;
+    com.example.watcher.Model.Supervision supervision;
+    Button btn_atencion, btn_informe;
+    private int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION;
+    double lat_destino, lng_destino;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate( savedInstanceState );
+        setContentView( R.layout.activity_destino_ronda );
+
+        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById( R.id.map );
+        mapFragment.getMapAsync( this );
+
+        Bundle objetoEnviado = getIntent().getExtras();
+        supervision = null;
+
+        if(objetoEnviado != null) {
+            supervision = (com.example.watcher.Model.Supervision) objetoEnviado.getSerializable("supervision");
+            lat_destino = -12.0908;
+            lng_destino = -77.0839;
+        }
+
+        final Button btn_satelite = findViewById(R.id.btn_satelite);
+        btn_satelite.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                /*btn_satelite.setVisibility(View.GONE);*/
+                mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+            }
+        });
+
+        final Button btn_hibrido = findViewById(R.id.btn_hibrido);
+        btn_hibrido.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+            }
+        });
+
+        final Button btn_Normal = findViewById(R.id.btn_Normal);
+        btn_Normal.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+            }
+        });
+
+        btn_atencion = findViewById(R.id.btn_atencion);
+        btn_informe = findViewById(R.id.btn_informe);
+
+        btn_atencion.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                btn_informe.setVisibility( View.VISIBLE );
+                btn_atencion.setVisibility( View.GONE );
+            }
+        });
+
+        btn_informe.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                Intent intent = new Intent().setClass(DestinoRonda.this, Supervision.class);
+                Bundle bundle = new Bundle();
+                bundle.putSerializable("supervision", supervision);
+                intent.putExtras(bundle);
+                startActivity(intent);
+                finish();
+            }
+        });
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient( this );
 
-        subirLatLongHub();
 
+        subirLatLongHub();
 
         //Crear hubconnection
         hubConnection = HubConnectionBuilder.create( "http://192.168.0.4/watcher/coordenadahub" ).build();
@@ -54,12 +120,6 @@ public class DestinoRonda extends FragmentActivity implements OnMapReadyCallback
 
         getAlertaNotGps();
         /*getLocation();*/
-        setContentView( R.layout.activity_destino_ronda );
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById( R.id.map );
-        mapFragment.getMapAsync( this );
-
     }
 
     private void subirLatLongHub() {
@@ -67,6 +127,7 @@ public class DestinoRonda extends FragmentActivity implements OnMapReadyCallback
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
             // here to request the missing permissions, and then overriding
+
             //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
             //                                          int[] grantResults)
             // to handle the case where the user grants the permission. See the documentation
@@ -78,7 +139,7 @@ public class DestinoRonda extends FragmentActivity implements OnMapReadyCallback
                     @Override
                     public void onSuccess(Location location) {
                         if (location != null) {
-
+                            Log.e("Latitud: ", + location.getLatitude() + "Longitude: " + location.getLongitude());
                         }
                     }
                 } );
@@ -91,7 +152,10 @@ public class DestinoRonda extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void getAlertaNotGps() {
-        final AlertDialog.Builder builder = new AlertDialog.Builder( this );
+
+
+
+        /*final AlertDialog.Builder builder = new AlertDialog.Builder( this );
         builder.setMessage( "Por favor encienda el GPS. Desea activarlo?" )
                 .setCancelable( false )
                 .setTitle( "GPS" )
@@ -107,7 +171,7 @@ public class DestinoRonda extends FragmentActivity implements OnMapReadyCallback
             }
         } );
         alerta = builder.create();
-        alerta.show();
+        alerta.show();*/
     }
 
     @Override
@@ -115,7 +179,7 @@ public class DestinoRonda extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
 
         // Add a marker in Sydney and move the camera
-        LatLng destino = new LatLng( -12.0908, -77.0839 );
+        LatLng destino = new LatLng( lat_destino, lng_destino );
         mMap.addMarker( new MarkerOptions().position( destino ).title( "Destino" ) );
         mMap.moveCamera( CameraUpdateFactory.newLatLng( destino ) );
         CameraPosition cameraPosition = new CameraPosition.Builder()
@@ -126,8 +190,18 @@ public class DestinoRonda extends FragmentActivity implements OnMapReadyCallback
                 .build();
         mMap.animateCamera( CameraUpdateFactory.newCameraPosition( cameraPosition ) );
 
-        if (ActivityCompat.checkSelfPermission( this, Manifest.permission.ACCESS_FINE_LOCATION ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission( this, Manifest.permission.ACCESS_COARSE_LOCATION ) != PackageManager.PERMISSION_GRANTED) {
-            getLastLocation();
+        if (ActivityCompat.checkSelfPermission( this,
+                Manifest.permission.ACCESS_FINE_LOCATION )
+                != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission( this, Manifest.permission.ACCESS_COARSE_LOCATION )
+                != PackageManager.PERMISSION_GRANTED) {
+                /*getLastLocation();*/
+
+                ActivityCompat.requestPermissions( DestinoRonda.this,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+
+
+
             return;
         }
         mMap.setMyLocationEnabled( true );
@@ -137,13 +211,20 @@ public class DestinoRonda extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onLocationChanged(Location location) {
                 LatLng miUbicacion = new LatLng( location.getLatitude(), location.getLongitude() );
-
-                Toast.makeText(getApplicationContext(), "Cambiando ubicación", Toast.LENGTH_SHORT).show();
-
-
+                //Toast.makeText(getApplicationContext(), "Cambiando ubicación", Toast.LENGTH_SHORT).show();
                 mMap.addMarker( new MarkerOptions().position( miUbicacion ).title( "Motorizado" ));
                 if(hubConnection.getConnectionState() == HubConnectionState.CONNECTED){
                     hubConnection.send( "enviarCoordenada",  location.getLatitude(), location.getLongitude(), 1);
+                }
+
+                double ditancia_faltante = calcularDistancia(location.getLatitude(), location.getLongitude(), lat_destino, lng_destino);
+                if(ditancia_faltante < 0.150){
+                    Intent intent = new Intent().setClass(DestinoRonda.this, Supervision.class);
+                    Bundle bundle = new Bundle();
+                    bundle.putSerializable("supervision", supervision);
+                    intent.putExtras(bundle);
+                    startActivity(intent);
+                    finish();
                 }
             }
 
@@ -175,6 +256,18 @@ public class DestinoRonda extends FragmentActivity implements OnMapReadyCallback
         locationManager.requestLocationUpdates( LocationManager.NETWORK_PROVIDER, 0, 0, locationListener );
 
 
+    }
+
+    private static double calcularDistancia(double lat1, double lng1, double lat2, double lng2) {
+        lat1 = Math.toRadians( lat1 );
+        lat2 = Math.toRadians( lat2 );
+        lng1 = Math.toRadians( lng1 );
+        lng2 = Math.toRadians( lng2 );
+
+        final double RADIO_TIERRA = 6371.01; // kilómetros
+        double distancia = RADIO_TIERRA * Math.acos( Math.sin( lat1 ) * Math.sin( lat2 )
+                + Math.cos(lat1) * Math.cos( lat2 ) * Math.cos( lng1 - lng2 ));
+        return distancia;
     }
 
     private void getLastLocation() {

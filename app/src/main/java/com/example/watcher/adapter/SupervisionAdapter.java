@@ -16,6 +16,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.watcher.DestinoRonda;
 import com.example.watcher.ItemClickListener;
 import com.example.watcher.Model.Supervision;
 import com.example.watcher.R;
@@ -66,7 +67,7 @@ public class SupervisionAdapter extends RecyclerView.Adapter<SupervisionHolder> 
 
                 Supervision supervision = models.get(position);
 
-                Intent intent = new Intent( context, com.example.watcher.Supervision.class );
+                Intent intent = new Intent( context, DestinoRonda.class );
                 Bundle bundle = new Bundle();
                 bundle.putSerializable("supervision", supervision);
                 intent.putExtras(bundle);

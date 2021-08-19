@@ -1,9 +1,82 @@
 <?xml version="1.0" encoding="utf-8"?>
-<fragment xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:map="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/map"
-    android:name="com.google.android.gms.maps.SupportMapFragment"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".DestinoRonda" />
+    android:layout_height="match_parent">
+
+    <fragment
+        android:id="@+id/map"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".DestinoRonda" />
+
+    <Button
+        android:visibility="gone"
+        android:id="@+id/btn_satelite"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="#0A3963"
+        android:textColor="#fff"
+        android:text="Satélite"/>
+
+    <Button
+        android:visibility="gone"
+        android:id="@+id/btn_hibrido"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="#0A3963"
+        android:textColor="#fff"
+        android:text="Híbrido"/>
+
+    <Button
+        android:visibility="gone"
+        android:id="@+id/btn_Normal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="#0A3963"
+        android:textColor="#fff"
+        android:text="Normal"/>
+
+    <LinearLayout
+        android:paddingLeft="25dp"
+        android:paddingRight="25dp"
+        android:orientation="vertical"
+        android:layout_alignParentBottom="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btn_atencion"
+            android:layout_marginTop="5dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:background="#0A3963"
+            android:textColor="#fff"
+            android:layout_marginBottom="70dp"
+            android:text="Iniciar Atención"/>
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:visibility="gone"
+            android:id="@+id/btn_informe"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="70dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:background="#ED3346"
+            android:textColor="#fff"
+            android:text="Crear informe"/>
+
+    </LinearLayout>
+    
+
+
+    
+</RelativeLayout>
+

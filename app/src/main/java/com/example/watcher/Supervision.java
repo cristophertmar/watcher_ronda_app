@@ -4,8 +4,10 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.ProgressDialog;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Base64;
@@ -13,6 +15,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -23,9 +26,16 @@ import android.provider.MediaStore;
 
 import com.example.watcher.Model.ApiGeneralRespuesta;
 import com.example.watcher.Model.Confirmacion;
+import com.example.watcher.Model.ImagenRespuesta;
 import com.example.watcher.Model.Resultado;
+import com.example.watcher.Model.SupervisionRespuesta;
+import com.example.watcher.Utils.RealPathUtil;
 import com.example.watcher.Utils.SupervisionService;
+import com.example.watcher.Utils.Utils;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedOutputStream;
@@ -40,6 +50,7 @@ import java.util.Map;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -59,15 +70,13 @@ public class Supervision extends AppCompatActivity  {
     Context context;
     SupervisionService supervisionService;
 
+    String filePath = "";
 
-    Bitmap bitmap;
-    int PICK_IMAGE_REQUEST = 1;
-    String UPLOAD_URL = "http://IP_DEL_WEBSERVICE/ARCHIVO_QUE_RECIBE_LA_PETICION.php";
 
-    String KEY_IMAGE = "foto";
-    String KEY_NOMBRE = "nombre";
+    Bitmap bitmap, bitmap_vacio;
 
     private Retrofit retrofit;
+    TextInputEditText et_comentario;
 
     private static final int PICK_IMAGE = 1;
 
@@ -84,6 +93,7 @@ public class Supervision extends AppCompatActivity  {
         btn_mapa = findViewById( R.id.btn_mapa );
         tv_abonado = findViewById( R.id.tv_abonado );
         tv_riesgo = findViewById( R.id.tv_riesgo );
+        et_comentario = findViewById( R.id.et_comentario );
 
         retrofit = new Retrofit.Builder()
                 .baseUrl(URL_BASE)
@@ -96,23 +106,36 @@ public class Supervision extends AppCompatActivity  {
         if(objetoEnviado != null) {
             supervision = (com.example.watcher.Model.Supervision) objetoEnviado.getSerializable("supervision");
             tv_abonado.setText( supervision.getId() + " - " + supervision.getAbonado().replace("- ", "") );
-            tv_riesgo.setText( supervision.getEstado() );
+            //tv_riesgo.setText( supervision.getEstado() );
         }
 
         btn_guardar.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
-                Resultado resultado = new Resultado(1, "");
-                supervisionService = retrofit.create( SupervisionService.class );
-                Call<ApiGeneralRespuesta> call = supervisionService.postResultado(resultado);
-                call.enqueue( new Callback<ApiGeneralRespuesta>() {
+                /*if(spinner.getSelectedItemPosition() == 0) {
+                    Toast.makeText(getApplicationContext(), "Seleccione un resultado", Toast.LENGTH_SHORT).show(); return;
+                }else if(et_comentario.getText().toString().isEmpty()) {
+                    Toast.makeText(getApplicationContext(), "Ingrese un comentario", Toast.LENGTH_SHORT).show(); return;
+                }else if(bitmap == bitmap_vacio) {
+                    Toast.makeText(getApplicationContext(), "Seleccione una imagen", Toast.LENGTH_SHORT).show(); return;
+                }
+
+                Resultado resultado = new Resultado(1, "");*/
+                enviarImagenData();
+                /*supervisionService = retrofit.create( SupervisionService.class );
+                Call<ApiGeneralRespuesta> call = supervisionService.postResultado(resultado);*/
+                /*call.enqueue( new Callback<ApiGeneralRespuesta>() {
                     @Override
                     public void onResponse(Call<ApiGeneralRespuesta> call, Response<ApiGeneralRespuesta> response) {
                         if(response.isSuccessful()) {
                             ApiGeneralRespuesta respuesta = response.body();
+
                             Toast.makeText(getApplicationContext(), respuesta.getMessage(), Toast.LENGTH_SHORT).show();
-                            enviarImagenData();
+
+                            Intent intent =new Intent(Supervision.this, Supervisiones.class);
+                            startActivity(intent);
+
                         }
                     }
 
@@ -120,9 +143,9 @@ public class Supervision extends AppCompatActivity  {
                     public void onFailure(Call<ApiGeneralRespuesta> call, Throwable t) {
 
                     }
-                } );
+                });*/
 
-            }
+                }
         } );
 
         btn_mapa.setOnClickListener( new View.OnClickListener() {
@@ -138,9 +161,9 @@ public class Supervision extends AppCompatActivity  {
                     public void onResponse(Call<ApiGeneralRespuesta> call, Response<ApiGeneralRespuesta> response) {
                         if(response.isSuccessful()) {
                             ApiGeneralRespuesta respuesta = response.body();
-                            Toast.makeText(getApplicationContext(), respuesta.getMessage(), Toast.LENGTH_SHORT).show();
+                            /*Toast.makeText(getApplicationContext(), respuesta.getMessage(), Toast.LENGTH_SHORT).show();
                             Intent intent =new Intent(Supervision.this, DestinoRonda.class);
-                            startActivity(intent);
+                            startActivity(intent);*/
                         }
                     }
 
@@ -184,6 +207,26 @@ public class Supervision extends AppCompatActivity  {
             try {
                 bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
                 mImagenview.setImageBitmap(bitmap);
+
+                Uri uri = data.getData();
+
+                /*String pathtt = "";
+                String[] projection = { MediaStore.MediaColumns.DATA };
+                ContentResolver cr = getApplicationContext().getContentResolver();
+                Cursor metaCursor = cr.query( uri, projection, null, null, null );
+                if(metaCursor != null) {
+                    try {
+                        if(metaCursor.moveToFirst()) {
+                            pathtt = metaCursor.getString( 0 );
+                        }
+                    } finally {
+                        metaCursor.close();
+                    }
+                }*/
+                /*Context context = getApplicationContext();
+                filePath = RealPathUtil.getRealPathFromURI_BelowAPI11( context, uri);*/
+                filePath = RealPathUtil.getRealPath(getApplicationContext(), uri);
+                Toast.makeText(getApplicationContext(), filePath, Toast.LENGTH_SHORT).show();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -191,6 +234,8 @@ public class Supervision extends AppCompatActivity  {
         }
 
     }
+
+
 
     public String getStringImagen(Bitmap bmp) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -201,16 +246,104 @@ public class Supervision extends AppCompatActivity  {
     }
 
     public void enviarImagenData(){
-        try{
 
-            File file = bitmapToFile(getApplicationContext(), bitmap, "test");
+            File file =  new File(filePath);
 
             OkHttpClient client = new OkHttpClient();
-            RequestBody body = new MultipartBody.Builder().setType( MultipartBody.FORM)
-                    .addFormDataPart("UploadedImage", file.getName(), RequestBody.create( MediaType.parse("application/octet-stream"), file))
+            RequestBody body = new MultipartBody.Builder().setType(MultipartBody.FORM)
+                    .addFormDataPart("UploadedImage", file.getName(), RequestBody.create(MediaType.parse("application/octet-stream"), file))
                     .build();
 
-            okhttp3.Request request = new okhttp3.Request.Builder().url( URL_BASE + "FileUpload").post(body).build();
+            Request request = new Request.Builder()
+                    .url(URL_BASE + "FileUpload")
+                    .post(body)
+                    .build();
+
+            client.newCall( request ).enqueue( new okhttp3.Callback() {
+                @Override
+                public void onFailure(okhttp3.Call call, IOException e) {
+                    Log.e("Ocurrió un error: ", e.getMessage());
+                }
+
+                @Override
+                public void onResponse(okhttp3.Call call, okhttp3.Response response) throws IOException {
+
+                    Log.e("Exitoso: ", response.message());
+
+                    if(response.isSuccessful()) {
+                        Toast.makeText(getApplicationContext(), "Imagen guardada" , Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(getApplicationContext(), "Ocurrió un problema al guardar la imagen" , Toast.LENGTH_SHORT).show();
+                    }
+
+                /*if (!response.isSuccessful()) {
+                    Toast.makeText(getApplicationContext(), "Ocurrió un problema al guardar la imagen" , Toast.LENGTH_SHORT).show();
+                }else{
+                    Toast.makeText(getApplicationContext(), "Imagen guardada" , Toast.LENGTH_SHORT).show();
+                    try {
+                        String responseStr = response.body().string(); //respuesta del servidor ==> OK
+                        Toast.makeText(getApplicationContext(), responseStr , Toast.LENGTH_SHORT).show();
+                        try {
+                            JSONObject objectResponse = new JSONObject(responseStr);
+                            Toast.makeText(getApplicationContext(), "Carga exitosa" , Toast.LENGTH_SHORT).show();
+                        } catch (JSONException je) {
+                            Toast.makeText(getApplicationContext(), "" + je.getMessage() , Toast.LENGTH_SHORT).show();
+                            Log.e("je", "" + je.getMessage());
+                        }
+                    } catch (Exception e){
+                        Toast.makeText(getApplicationContext(), "" + e.getMessage() , Toast.LENGTH_SHORT).show();
+                        Log.e("Excep", "" + e.getMessage());
+                    }
+                }*/
+
+                }
+            } );
+
+    }
+
+
+    public void enviarImagenData2(){
+        try{
+
+            //File file = bitmapToFile(getApplicationContext(), bitmap, "test");
+
+            File file = new File( filePath );
+
+            RequestBody requestBody = RequestBody.create( MediaType.parse( "image/jpg" ), file );
+
+
+            RequestBody body = new MultipartBody.Builder().setType(MultipartBody.FORM)
+                    .addFormDataPart("UploadedImage", "imagen.jpg", RequestBody.create(MediaType.parse("application/octet-stream"), file))
+                    .build();
+
+            MultipartBody.Part part = MultipartBody.Part.createFormData( "uploadFile", file.getName(), body );
+
+            /*OkHttpClient client = new OkHttpClient();
+            RequestBody requestFile = new MultipartBody.Builder().setType( MultipartBody.FORM)
+                    .addFormDataPart("UploadedImage", file.getName(), RequestBody.create( MediaType.parse("application/octet-stream"), file))
+                    .build();*/
+            /*RequestBody requestFile = RequestBody.create( MediaType.parse("image/jpg"), file );*/
+            //MultipartBody.Part body2 = MultipartBody.Part.createFormData("uploadFile", "uploadFile", requestFile);
+
+            supervisionService = retrofit.create( SupervisionService.class );
+            Call<ImagenRespuesta> call = supervisionService.cargarImagen(part);
+
+            call.enqueue( new Callback<ImagenRespuesta>() {
+                @Override
+                public void onResponse(Call<ImagenRespuesta> call, Response<ImagenRespuesta> response) {
+                    if(response.isSuccessful()) {
+                        ImagenRespuesta respuesta = response.body();
+                        Toast.makeText(getApplicationContext(), respuesta.getValue(), Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<ImagenRespuesta> call, Throwable t) {
+
+                }
+            } );
+
+            /*okhttp3.Request request = new okhttp3.Request.Builder().url( URL_BASE + "FileUpload").post(body).build();
 
             client.newCall( request ).enqueue( new okhttp3.Callback() {
                 @Override
@@ -224,7 +357,7 @@ public class Supervision extends AppCompatActivity  {
                         Toast.makeText(getApplicationContext(), "Imagen guardada", Toast.LENGTH_LONG).show();
                     }
                 }
-            } );
+            } );*/
 
         } catch(Exception exc) {
             Log.e("ExecptionSendImage", "" + exc.getMessage());
