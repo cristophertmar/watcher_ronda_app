@@ -2,18 +2,25 @@ package com.example.watcher;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
@@ -21,6 +28,12 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.example.watcher.Model.AlarmaNotificacion;
+import com.example.watcher.Model.ApiGeneralRespuesta;
+import com.example.watcher.Model.SupervisionRespuesta;
+import com.example.watcher.Services.CoordenadaService;
+import com.example.watcher.Utils.AlarmaService;
+import com.example.watcher.Utils.SupervisionService;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -35,6 +48,15 @@ import com.microsoft.signalr.HubConnection;
 import com.microsoft.signalr.HubConnectionBuilder;
 import com.microsoft.signalr.HubConnectionState;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+
+import static com.example.watcher.Utils.Apis.URL_BASE;
+import static com.example.watcher.Utils.Apis.URL_HUB;
+
 public class DestinoRonda extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
@@ -42,9 +64,16 @@ public class DestinoRonda extends FragmentActivity implements OnMapReadyCallback
     HubConnection hubConnection;
     private FusedLocationProviderClient mFusedLocationClient;
     com.example.watcher.Model.Supervision supervision;
+    AlarmaNotificacion alarma;
     Button btn_atencion, btn_informe;
     private int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION;
-    double lat_destino, lng_destino;
+    double lat_destino;
+    double lng_destino;
+    String OPERACION;
+
+    private Retrofit retrofit;
+    SupervisionService supervisionService;
+    AlarmaService alarmaService;
 
 
     @Override
@@ -57,14 +86,44 @@ public class DestinoRonda extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById( R.id.map );
         mapFragment.getMapAsync( this );
 
+        retrofit = new Retrofit.Builder()
+                .baseUrl(URL_BASE)
+                .addConverterFactory( GsonConverterFactory.create() )
+                .build();
+
         Bundle objetoEnviado = getIntent().getExtras();
+        OPERACION = getIntent().getStringExtra("OPERACION");
         supervision = null;
 
+        btn_atencion = findViewById(R.id.btn_atencion);
+
+        btn_informe = findViewById(R.id.btn_informe);
+
         if(objetoEnviado != null) {
-            supervision = (com.example.watcher.Model.Supervision) objetoEnviado.getSerializable("supervision");
-            lat_destino = -12.0908;
-            lng_destino = -77.0839;
+
+            switch (OPERACION) {
+                case "SUPERVISION":
+                    supervision = (com.example.watcher.Model.Supervision) objetoEnviado.getSerializable("SUPERVISION");
+                    lat_destino = Double.parseDouble( supervision.getLat() ) ;
+                    lng_destino = Double.parseDouble( supervision.getLng() ) ;
+                    break;
+                default:
+                    alarma = (AlarmaNotificacion) objetoEnviado.getSerializable("ALARMA");
+                    lat_destino =  Double.parseDouble( alarma.getLat() );
+                    lng_destino = Double.parseDouble( alarma.getLng() );
+                    btn_atencion.setVisibility( View.GONE );
+                    btn_informe.setVisibility( View.VISIBLE );
+                    break;
+            }
+
         }
+
+        //Crear hubconnection
+        hubConnection = HubConnectionBuilder.create( URL_HUB + "coordenadahub" ).build();
+        hubConnection.start();
+
+        getAlertaNotGps();
+        /*getLocation();*/
 
         final Button btn_satelite = findViewById(R.id.btn_satelite);
         btn_satelite.setOnClickListener(new View.OnClickListener() {
@@ -88,13 +147,22 @@ public class DestinoRonda extends FragmentActivity implements OnMapReadyCallback
             }
         });
 
-        btn_atencion = findViewById(R.id.btn_atencion);
-        btn_informe = findViewById(R.id.btn_informe);
-
         btn_atencion.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+
+                switch (OPERACION) {
+                    case "SUPERVISION":
+                        actualizar_estado_supervision(2);
+                        break;
+                    default:
+                        break;
+                }
+
                 btn_informe.setVisibility( View.VISIBLE );
                 btn_atencion.setVisibility( View.GONE );
+                subirLatLongHub();
+                //startService( new Intent(getApplicationContext(), CoordenadaService.class ) );
+
             }
         });
 
@@ -102,7 +170,19 @@ public class DestinoRonda extends FragmentActivity implements OnMapReadyCallback
             public void onClick(View v) {
                 Intent intent = new Intent().setClass(DestinoRonda.this, Supervision.class);
                 Bundle bundle = new Bundle();
-                bundle.putSerializable("supervision", supervision);
+
+                switch (OPERACION) {
+                    case "SUPERVISION":
+                        actualizar_estado_supervision(3);
+                        bundle.putSerializable("supervision", supervision);
+                        intent.putExtra("OPERACION", "SUPERVISION");
+                        break;
+                    default:
+                        actualizar_estado_alarma(3);
+                        bundle.putSerializable("alarma", alarma);
+                        intent.putExtra("OPERACION", "ALARMA");
+                        break;
+                }
                 intent.putExtras(bundle);
                 startActivity(intent);
                 finish();
@@ -112,15 +192,44 @@ public class DestinoRonda extends FragmentActivity implements OnMapReadyCallback
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient( this );
 
 
-        subirLatLongHub();
-
-        //Crear hubconnection
-        hubConnection = HubConnectionBuilder.create( "http://192.168.0.4/watcher/coordenadahub" ).build();
-        hubConnection.start();
-
-        getAlertaNotGps();
-        /*getLocation();*/
     }
+
+    private void actualizar_estado_supervision(int id_estado) {
+
+        supervisionService = retrofit.create( SupervisionService.class );
+        Call<ApiGeneralRespuesta> call = supervisionService.putEstado(supervision.getId(), id_estado);
+        call.enqueue( new Callback<ApiGeneralRespuesta>() {
+            @Override
+            public void onResponse(Call<ApiGeneralRespuesta> call, Response<ApiGeneralRespuesta> response) {
+
+            }
+
+            @Override
+            public void onFailure(Call<ApiGeneralRespuesta> call, Throwable t) {
+
+            }
+        } );
+
+    }
+
+    private  void actualizar_estado_alarma(int id_estado) {
+
+        alarmaService = retrofit.create( AlarmaService.class );
+        Call<ApiGeneralRespuesta> call = alarmaService.putEstado(alarma.getId(), 3);
+        call.enqueue( new Callback<ApiGeneralRespuesta>() {
+            @Override
+            public void onResponse(Call<ApiGeneralRespuesta> call, Response<ApiGeneralRespuesta> response) {
+
+            }
+
+            @Override
+            public void onFailure(Call<ApiGeneralRespuesta> call, Throwable t) {
+
+            }
+        } );
+
+    }
+
 
     private void subirLatLongHub() {
         if (ActivityCompat.checkSelfPermission( this, Manifest.permission.ACCESS_FINE_LOCATION ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission( this, Manifest.permission.ACCESS_COARSE_LOCATION ) != PackageManager.PERMISSION_GRANTED) {
@@ -140,6 +249,7 @@ public class DestinoRonda extends FragmentActivity implements OnMapReadyCallback
                     public void onSuccess(Location location) {
                         if (location != null) {
                             Log.e("Latitud: ", + location.getLatitude() + "Longitude: " + location.getLongitude());
+                            enviarCoordenadas(location.getLatitude(), location.getLongitude(), 1);
                         }
                     }
                 } );
@@ -152,8 +262,6 @@ public class DestinoRonda extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void getAlertaNotGps() {
-
-
 
         /*final AlertDialog.Builder builder = new AlertDialog.Builder( this );
         builder.setMessage( "Por favor encienda el GPS. Desea activarlo?" )
@@ -172,6 +280,12 @@ public class DestinoRonda extends FragmentActivity implements OnMapReadyCallback
         } );
         alerta = builder.create();
         alerta.show();*/
+    }
+
+    public void enviarCoordenadas(double lat, double lng, int id_motorizado) {
+        if(hubConnection.getConnectionState() == HubConnectionState.CONNECTED){
+            hubConnection.send( "enviarCoordenada",  lat, lng, id_motorizado);
+        }
     }
 
     @Override
@@ -199,11 +313,9 @@ public class DestinoRonda extends FragmentActivity implements OnMapReadyCallback
                 ActivityCompat.requestPermissions( DestinoRonda.this,
                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                         MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
-
-
-
             return;
         }
+
         mMap.setMyLocationEnabled( true );
         mMap.getUiSettings().setMyLocationButtonEnabled( false );
         LocationManager locationManager = (LocationManager) DestinoRonda.this.getSystemService( Context.LOCATION_SERVICE );
@@ -213,9 +325,7 @@ public class DestinoRonda extends FragmentActivity implements OnMapReadyCallback
                 LatLng miUbicacion = new LatLng( location.getLatitude(), location.getLongitude() );
                 //Toast.makeText(getApplicationContext(), "Cambiando ubicación", Toast.LENGTH_SHORT).show();
                 mMap.addMarker( new MarkerOptions().position( miUbicacion ).title( "Motorizado" ));
-                if(hubConnection.getConnectionState() == HubConnectionState.CONNECTED){
-                    hubConnection.send( "enviarCoordenada",  location.getLatitude(), location.getLongitude(), 1);
-                }
+                enviarCoordenadas(location.getLatitude(), location.getLongitude(), 1);
 
                 double ditancia_faltante = calcularDistancia(location.getLatitude(), location.getLongitude(), lat_destino, lng_destino);
                 if(ditancia_faltante < 0.150){

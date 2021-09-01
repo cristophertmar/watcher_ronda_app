@@ -47,7 +47,7 @@
                         android:layout_height="match_parent"
                         android:textStyle="bold"
                         android:textSize="16sp"
-                        android:text="9"
+                        android:text="5"
                         android:textColor="@color/colorWhite"
                        />
 

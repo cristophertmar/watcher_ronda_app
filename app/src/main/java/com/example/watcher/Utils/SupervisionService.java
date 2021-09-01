@@ -16,16 +16,20 @@ import retrofit2.http.GET;
 import retrofit2.http.Multipart;
 import retrofit2.http.POST;
 import retrofit2.http.Part;
+import retrofit2.http.Query;
 
 public interface SupervisionService {
 
-    @GET("supervision")
-    Call<SupervisionRespuesta> getSupervisiones();
+    @GET("supervision/listar")
+    Call<SupervisionRespuesta> getSupervisiones(@Query( "id_usuario" ) int id_usuario);
+
+    @GET("supervision/actualizar_estado")
+    Call<ApiGeneralRespuesta> putEstado(@Query( "id_supervision" ) String id_supervision, @Query( "id_estado" ) int id_estado);
 
     @POST("supervision/confirmacion")
     Call<ApiGeneralRespuesta> postConfirmacion(@Body Confirmacion confirmacion);
 
-    @POST("supervision/resultado")
+    @POST("informe/guardar")
     Call<ApiGeneralRespuesta> postResultado(@Body Resultado resultado);
 
     @Multipart

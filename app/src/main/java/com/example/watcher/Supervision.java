@@ -24,6 +24,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.provider.MediaStore;
 
+import com.example.watcher.Model.AlarmaNotificacion;
 import com.example.watcher.Model.ApiGeneralRespuesta;
 import com.example.watcher.Model.Confirmacion;
 import com.example.watcher.Model.ImagenRespuesta;
@@ -71,6 +72,10 @@ public class Supervision extends AppCompatActivity  {
     SupervisionService supervisionService;
 
     String filePath = "";
+    String OPERACION;
+    String id_gestion;
+    com.example.watcher.Model.Supervision supervision = null;
+    AlarmaNotificacion alarma;
 
 
     Bitmap bitmap, bitmap_vacio;
@@ -101,19 +106,35 @@ public class Supervision extends AppCompatActivity  {
                 .build();
 
         Bundle objetoEnviado = getIntent().getExtras();
-        com.example.watcher.Model.Supervision supervision = null;
+        OPERACION = getIntent().getStringExtra("OPERACION");
+
+        /*if(objetoEnviado != null) {
+
+            tv_riesgo.setText( supervision.getEstado() );
+        }*/
 
         if(objetoEnviado != null) {
-            supervision = (com.example.watcher.Model.Supervision) objetoEnviado.getSerializable("supervision");
-            tv_abonado.setText( supervision.getId() + " - " + supervision.getAbonado().replace("- ", "") );
-            //tv_riesgo.setText( supervision.getEstado() );
+
+            switch (OPERACION) {
+                case "SUPERVISION":
+                    supervision = (com.example.watcher.Model.Supervision) objetoEnviado.getSerializable("supervision");
+                    tv_abonado.setText( supervision.getId() + " - " + supervision.getAbonado().replace("- ", "") );
+                    id_gestion = supervision.getId();
+                    break;
+                default:
+                    alarma = (AlarmaNotificacion) objetoEnviado.getSerializable("alarma");
+                    tv_abonado.setText( alarma.getId() + " - " + alarma.getAbonado().replace("- ", "") );
+                    id_gestion = alarma.getId();
+                    break;
+            }
+
         }
 
         btn_guardar.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
-                /*if(spinner.getSelectedItemPosition() == 0) {
+                if(spinner.getSelectedItemPosition() == 0) {
                     Toast.makeText(getApplicationContext(), "Seleccione un resultado", Toast.LENGTH_SHORT).show(); return;
                 }else if(et_comentario.getText().toString().isEmpty()) {
                     Toast.makeText(getApplicationContext(), "Ingrese un comentario", Toast.LENGTH_SHORT).show(); return;
@@ -121,21 +142,19 @@ public class Supervision extends AppCompatActivity  {
                     Toast.makeText(getApplicationContext(), "Seleccione una imagen", Toast.LENGTH_SHORT).show(); return;
                 }
 
-                Resultado resultado = new Resultado(1, "");*/
-                enviarImagenData();
-                /*supervisionService = retrofit.create( SupervisionService.class );
-                Call<ApiGeneralRespuesta> call = supervisionService.postResultado(resultado);*/
-                /*call.enqueue( new Callback<ApiGeneralRespuesta>() {
+                Resultado resultado = new Resultado("", et_comentario.getText().toString(), OPERACION, id_gestion);
+
+                supervisionService = retrofit.create( SupervisionService.class );
+                Call<ApiGeneralRespuesta> call = supervisionService.postResultado(resultado);
+                call.enqueue( new Callback<ApiGeneralRespuesta>() {
                     @Override
                     public void onResponse(Call<ApiGeneralRespuesta> call, Response<ApiGeneralRespuesta> response) {
                         if(response.isSuccessful()) {
                             ApiGeneralRespuesta respuesta = response.body();
-
+                            enviarImagenData();
                             Toast.makeText(getApplicationContext(), respuesta.getMessage(), Toast.LENGTH_SHORT).show();
-
-                            Intent intent =new Intent(Supervision.this, Supervisiones.class);
+                            Intent intent =new Intent(Supervision.this, Menu.class);
                             startActivity(intent);
-
                         }
                     }
 
@@ -143,7 +162,7 @@ public class Supervision extends AppCompatActivity  {
                     public void onFailure(Call<ApiGeneralRespuesta> call, Throwable t) {
 
                     }
-                });*/
+                });
 
                 }
         } );
@@ -271,9 +290,9 @@ public class Supervision extends AppCompatActivity  {
                     Log.e("Exitoso: ", response.message());
 
                     if(response.isSuccessful()) {
-                        Toast.makeText(getApplicationContext(), "Imagen guardada" , Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(getApplicationContext(), "Imagen guardada" , Toast.LENGTH_SHORT).show();
                     } else {
-                        Toast.makeText(getApplicationContext(), "Ocurrió un problema al guardar la imagen" , Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(getApplicationContext(), "Ocurrió un problema al guardar la imagen" , Toast.LENGTH_SHORT).show();
                     }
 
                 /*if (!response.isSuccessful()) {

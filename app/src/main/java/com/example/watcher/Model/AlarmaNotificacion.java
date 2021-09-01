@@ -2,7 +2,8 @@ package com.example.watcher.Model;
 
 import java.io.Serializable;
 
-public class Supervision implements Serializable {
+public class AlarmaNotificacion implements Serializable {
+
 
     private String id;
     private String cod_abonado;
@@ -13,27 +14,13 @@ public class Supervision implements Serializable {
     private String estado;
     private String fecha;
     private String hora;
-    private int id_riesgo;
-    private String riesgo;
     private int id_usuario;
+    private String titulo;
+    private String descripcion;
 
-    public Supervision() {
+    public AlarmaNotificacion() {
     }
 
-    public Supervision(String id, String cod_abonado, String abonado, String lat, String lng, int id_estado, String estado, String fecha, String hora, int id_riesgo, String riesgo, int id_usuario) {
-        this.id = id;
-        this.cod_abonado = cod_abonado;
-        this.abonado = abonado;
-        this.lat = lat;
-        this.lng = lng;
-        this.id_estado = id_estado;
-        this.estado = estado;
-        this.fecha = fecha;
-        this.hora = hora;
-        this.id_riesgo = id_riesgo;
-        this.riesgo = riesgo;
-        this.id_usuario = id_usuario;
-    }
 
     public String getId() {
         return id;
@@ -107,27 +94,27 @@ public class Supervision implements Serializable {
         this.hora = hora;
     }
 
-    public int getId_riesgo() {
-        return id_riesgo;
-    }
-
-    public void setId_riesgo(int id_riesgo) {
-        this.id_riesgo = id_riesgo;
-    }
-
-    public String getRiesgo() {
-        return riesgo;
-    }
-
-    public void setRiesgo(String riesgo) {
-        this.riesgo = riesgo;
-    }
-
     public int getId_usuario() {
         return id_usuario;
     }
 
     public void setId_usuario(int id_usuario) {
         this.id_usuario = id_usuario;
+    }
+
+    public String getTitulo() {
+        return titulo;
+    }
+
+    public void setTitulo(String titulo) {
+        this.titulo = titulo;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
     }
 }

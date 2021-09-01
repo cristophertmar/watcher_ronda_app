@@ -69,7 +69,8 @@ public class SupervisionAdapter extends RecyclerView.Adapter<SupervisionHolder> 
 
                 Intent intent = new Intent( context, DestinoRonda.class );
                 Bundle bundle = new Bundle();
-                bundle.putSerializable("supervision", supervision);
+                bundle.putSerializable("SUPERVISION", supervision);
+                intent.putExtra("OPERACION", "SUPERVISION");
                 intent.putExtras(bundle);
                 context.startActivity( intent );
 

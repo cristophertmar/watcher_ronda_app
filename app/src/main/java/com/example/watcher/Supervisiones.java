@@ -58,8 +58,11 @@ public class Supervisiones extends AppCompatActivity {
     }
 
     public void listarSupervisiones() {
+
+        int id_usuario = ((MyApplication) this.getApplication()).getUsuario().getId();
+
         supervisionService = retrofit.create( SupervisionService.class );
-        Call<SupervisionRespuesta> call = supervisionService.getSupervisiones();
+        Call<SupervisionRespuesta> call = supervisionService.getSupervisiones(id_usuario);
         call.enqueue( new Callback<SupervisionRespuesta>() {
             @Override
             public void onResponse(Call<SupervisionRespuesta> call, Response<SupervisionRespuesta> response) {
@@ -67,7 +70,7 @@ public class Supervisiones extends AppCompatActivity {
                 if(response.isSuccessful()) {
                     SupervisionRespuesta supervisionRespuesta = response.body();
                     listaSupervisiones = supervisionRespuesta.getData();
-                    tv_cantidad.setText( supervisionRespuesta.getRegistros() + "" );
+                    tv_cantidad.setText( supervisionRespuesta.getTotal() + "" );
 
                     myAdapter = new SupervisionAdapter(Supervisiones.this, listaSupervisiones);
                     mRecyclerView.setAdapter(myAdapter);
