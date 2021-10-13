@@ -8,6 +8,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Base64;
@@ -17,6 +18,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -45,6 +47,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Hashtable;
 import java.util.Map;
 
@@ -85,6 +89,9 @@ public class Supervision extends AppCompatActivity  {
 
     private static final int PICK_IMAGE = 1;
 
+    TextView tv_coordenadas, tv_hora_llegada, tv_fecha_reporte;
+    LinearLayout ly_color_riesgo;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,6 +106,10 @@ public class Supervision extends AppCompatActivity  {
         tv_abonado = findViewById( R.id.tv_abonado );
         tv_riesgo = findViewById( R.id.tv_riesgo );
         et_comentario = findViewById( R.id.et_comentario );
+        tv_coordenadas = findViewById( R.id.tv_coordenadas );
+        tv_hora_llegada = findViewById( R.id.tv_hora_llegada );
+        tv_fecha_reporte = findViewById( R.id.tv_fecha_reporte );
+        ly_color_riesgo = findViewById( R.id.ly_color_riesgo );
 
         retrofit = new Retrofit.Builder()
                 .baseUrl(URL_BASE)
@@ -110,7 +121,7 @@ public class Supervision extends AppCompatActivity  {
 
         /*if(objetoEnviado != null) {
 
-            tv_riesgo.setText( supervision.getEstado() );
+
         }*/
 
         if(objetoEnviado != null) {
@@ -120,15 +131,30 @@ public class Supervision extends AppCompatActivity  {
                     supervision = (com.example.watcher.Model.Supervision) objetoEnviado.getSerializable("supervision");
                     tv_abonado.setText( supervision.getId() + " - " + supervision.getAbonado().replace("- ", "") );
                     id_gestion = supervision.getId();
+                    tv_coordenadas.setText( supervision.getLat() + ", " + supervision.getLng() );
+                    tv_riesgo.setText( supervision.getRiesgo() );
+
+                    ly_color_riesgo.setBackgroundColor( Color.parseColor( obtenerColorRiesgo(supervision.getId_riesgo()) ) );
+
+
                     break;
                 default:
                     alarma = (AlarmaNotificacion) objetoEnviado.getSerializable("alarma");
                     tv_abonado.setText( alarma.getId() + " - " + alarma.getAbonado().replace("- ", "") );
                     id_gestion = alarma.getId();
+                    tv_coordenadas.setText( alarma.getLat() + ", " + alarma.getLng() );
+                    tv_riesgo.setText( "ALTO" );
                     break;
             }
 
+            String hora_llegada = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss").format( Calendar.getInstance().getTime());
+            String fecha_reporte = new SimpleDateFormat("dd/MM/yyyy").format( Calendar.getInstance().getTime());
+            tv_hora_llegada.setText( hora_llegada );
+            tv_fecha_reporte.setText( fecha_reporte );
+
+
         }
+
 
         btn_guardar.setOnClickListener( new View.OnClickListener() {
             @Override
@@ -254,6 +280,30 @@ public class Supervision extends AppCompatActivity  {
 
     }
 
+    private String obtenerColorRiesgo(int id_riesgo) {
+
+        String color = "";
+
+        switch (id_riesgo) {
+            case 1:
+                color = "#CBDBA5";
+                break;
+            case 2:
+                color = "#7C9E38";
+                break;
+            case 3:
+                color = "#F1BB3A";
+                break;
+            case 4:
+                color = "#F27354";
+                break;
+            default:
+                color = "#C11F1F";
+                break;
+        }
+
+        return color;
+    }
 
 
     public String getStringImagen(Bitmap bmp) {

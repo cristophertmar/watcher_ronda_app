@@ -24,6 +24,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -161,7 +162,7 @@ public class DestinoRonda extends FragmentActivity implements OnMapReadyCallback
                 btn_informe.setVisibility( View.VISIBLE );
                 btn_atencion.setVisibility( View.GONE );
                 subirLatLongHub();
-                //startService( new Intent(getApplicationContext(), CoordenadaService.class ) );
+                startService( new Intent(getApplicationContext(), CoordenadaService.class ) );
 
             }
         });
@@ -193,6 +194,17 @@ public class DestinoRonda extends FragmentActivity implements OnMapReadyCallback
 
 
     }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+
+        Intent intent = new Intent().setClass(this, Menu.class);
+        startActivity(intent);
+        finish();
+        return super.onKeyDown( keyCode, event );
+    }
+
+
 
     private void actualizar_estado_supervision(int id_estado) {
 

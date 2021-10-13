@@ -11,6 +11,7 @@ import android.graphics.Color;
 import android.location.Location;
 import android.os.Build;
 import android.os.CountDownTimer;
+import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
@@ -21,7 +22,9 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 import com.example.watcher.DestinoRonda;
+import com.example.watcher.Menu;
 import com.example.watcher.Model.AlarmaNotificacion;
+import com.example.watcher.Model.PoligonoVerify;
 import com.example.watcher.MyApplication;
 import com.example.watcher.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -38,7 +41,9 @@ import static com.example.watcher.Utils.Apis.URL_HUB;
 
 public class CoordenadaService extends Service {
 
-    HubConnection hubConnection;
+    HubConnection hubConnection, hubpoligono;
+    Handler handler = new Handler();
+    private final int TIEMPO = 5000;
 
     public void onCreate() {
     }
@@ -47,6 +52,7 @@ public class CoordenadaService extends Service {
     public int onStartCommand(Intent intent, int flag, int idProcess) {
 
         hubConnection = HubConnectionBuilder.create( URL_HUB + "alarmahub" ).build();
+        hubpoligono = HubConnectionBuilder.create( URL_HUB + "poligono" ).build();
         createNotificationChannel();
 
         //Crear hubconnection
@@ -54,9 +60,16 @@ public class CoordenadaService extends Service {
             hubConnection.start();
         }
 
+        if(hubConnection.getConnectionState() == HubConnectionState.DISCONNECTED){
+            hubpoligono.start();
+        }
+
+        test();
+
         hubConnection.on( "recibirAlarma", (alarma) -> {
             if(alarma.getId_usuario() == ((MyApplication) this.getApplication()).getUsuario().getId()) {
                 createNotification(alarma);
+                //Menu.obtenerAlarma();
             }
         }, AlarmaNotificacion.class );
 
@@ -87,6 +100,18 @@ public class CoordenadaService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return null;
+    }
+
+    private void test() {
+        handler.postDelayed(new Runnable() {
+            public void run() {
+                // función a ejecutar
+                //Toast.makeText(getApplicationContext(), "Este es un test", Toast.LENGTH_SHORT).show();
+
+                handler.postDelayed(this, TIEMPO);
+            }
+
+        }, TIEMPO);
     }
 
 

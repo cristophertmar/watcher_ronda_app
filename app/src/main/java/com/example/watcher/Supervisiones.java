@@ -4,8 +4,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.widget.TextView;
 
 import com.example.watcher.Model.Supervision;
@@ -55,6 +57,14 @@ public class Supervisiones extends AppCompatActivity {
 
         listarSupervisiones();
 
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        Intent intent = new Intent().setClass(this, Menu.class);
+        startActivity(intent);
+        finish();
+        return super.onKeyDown( keyCode, event );
     }
 
     public void listarSupervisiones() {

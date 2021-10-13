@@ -17,6 +17,8 @@ public class AlarmaNotificacion implements Serializable {
     private int id_usuario;
     private String titulo;
     private String descripcion;
+    private int alarmas;
+    private int supervisiones;
 
     public AlarmaNotificacion() {
     }
@@ -116,5 +118,21 @@ public class AlarmaNotificacion implements Serializable {
 
     public void setDescripcion(String descripcion) {
         this.descripcion = descripcion;
+    }
+
+    public int getAlarmas() {
+        return alarmas;
+    }
+
+    public void setAlarmas(int alarmas) {
+        this.alarmas = alarmas;
+    }
+
+    public int getSupervisiones() {
+        return supervisiones;
+    }
+
+    public void setSupervisiones(int supervisiones) {
+        this.supervisiones = supervisiones;
     }
 }

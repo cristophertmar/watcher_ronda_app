@@ -9,7 +9,4 @@ public class Apis {
     public static SupervisionService getSupervisionService() {
         return Cliente.getCliente(URL_BASE).create(SupervisionService.class);
     }
-
-
-
 }
